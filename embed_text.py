@@ -1,15 +1,15 @@
-# embed_text.py
-
 import os
 import json
+import numpy as np
 from dotenv import load_dotenv
 from openai import OpenAI
 import tiktoken
 
-# Load .env file
+# Load .env file for API key
 load_dotenv()
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Truncate to max_tokens using tokenization
+# Token-safe truncation
 def truncate_to_token_limit(text, max_tokens=8191, model="text-embedding-ada-002"):
     encoding = tiktoken.encoding_for_model(model)
     tokens = encoding.encode(text)
@@ -17,33 +17,50 @@ def truncate_to_token_limit(text, max_tokens=8191, model="text-embedding-ada-002
         tokens = tokens[:max_tokens]
     return encoding.decode(tokens)
 
-# Create OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
+# Get embedding from OpenAI
 def get_embedding(text, model="text-embedding-ada-002"):
     response = client.embeddings.create(
-        input=[text],  # input must be a list, even if it's one sentence
+        input=[text],
         model=model
     )
-    embedding = response.data[0].embedding
-    return embedding
+    return response.data[0].embedding
 
+# Save metadata and embeddings to .npz file
+def save_metadata_and_embeddings(doc_names, dates, embeddings, out_path="speech_embeddings_light.npz"):
+    np.savez(out_path,
+             doc_names=np.array(doc_names),
+             dates=np.array(dates),
+             embeddings=np.array(embeddings))
+    print(f"\nSaved embeddings to {out_path}")
+
+# Main logic
 if __name__ == "__main__":
-    # read JSON file 
-    with open('speeches.json', 'r') as f:
-        documents = json.load(f)  # this will be a list of dicts
+    with open("speeches.json", "r") as f:
+        documents = json.load(f)
 
-    # loop through each document
-    for doc in documents:
-        doc_name = doc['doc_name']
-        transcript = doc['transcript']
+    doc_names = []
+    dates = []
+    embeddings = []
 
-        print(f"Processing document: {doc_name}")
+    total = len(documents)
+    for i, doc in enumerate(documents, 1):
+        name = doc["doc_name"]
+        date = doc["date"]
+        transcript = doc["transcript"]
 
-        # get embedding
+        print(f"[{i}/{total}] Processing document: {name}")
+
         truncated = truncate_to_token_limit(transcript)
-        embedding = get_embedding(truncated)
-        # embedding = get_embedding(transcript)
+        try:
+            embedding = get_embedding(truncated)
+            print(f"Embedding preview for '{name[:30]}...': {embedding[:5]}...")
+        except Exception as e:
+            print(f"Error embedding '{name}': {e}")
+            continue
 
-        # print embedding
-        print(f"Embedding for {doc_name[:30]}...: {embedding[:5]}...") 
+        doc_names.append(name)
+        dates.append(date)
+        embeddings.append(embedding)
+
+    print(f"\nFinished embedding {len(embeddings)} out of {total} documents.")
+    save_metadata_and_embeddings(doc_names, dates, embeddings)
