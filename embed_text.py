@@ -26,7 +26,7 @@ def get_embedding(text, model="text-embedding-ada-002"):
     return response.data[0].embedding
 
 # Save metadata and embeddings to .npz file
-def save_metadata_and_embeddings(doc_names, dates, embeddings, out_path="speech_embeddings_light.npz"):
+def save_metadata_and_embeddings(doc_names, dates, embeddings, out_path="speech_embeddings.npz"):
     np.savez(out_path,
              doc_names=np.array(doc_names),
              dates=np.array(dates),
