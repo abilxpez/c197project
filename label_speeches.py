@@ -10,13 +10,9 @@ from typing import List
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Load speeches
-with open("speeches.json", "r") as f:
-    all_documents = json.load(f)
+CHECKPOINT_PATH = "label_checkpoint.json"
 
-documents = all_documents[:5]  # For testing; change to all_documents for full run
-
-# List of topic labels
+# Topic labels
 topic_labels = [
     "Economy and Trade",
     "National Defense and Military",
@@ -42,7 +38,7 @@ topic_labels = [
     "Indigenous and Tribal Affairs"
 ]
 
-# Prompt with numbered topics
+# Prompt with numbered labels
 def build_prompt(text: str) -> str:
     numbered_topics = "\n".join([f"{i+1}. {label}" for i, label in enumerate(topic_labels)])
     return (
@@ -55,11 +51,11 @@ def build_prompt(text: str) -> str:
         f"---\nSpeech:\n{text}"
     )
 
-# Split long speeches into chunks
+# Break text into chunks
 def chunk_text(text: str, max_chars: int = 12000) -> List[str]:
     return [text[i:i+max_chars] for i in range(0, len(text), max_chars)]
 
-# Run GPT and map number labels back to topics
+# Convert GPT output numbers to topic labels
 def classify_speech(text: str) -> List[str]:
     chunks = chunk_text(text)
     label_indices = set()
@@ -79,7 +75,7 @@ def classify_speech(text: str) -> List[str]:
             for item in output.split(","):
                 item = item.strip()
                 if item.isdigit():
-                    index = int(item) - 1  # Convert 1-based to 0-based index
+                    index = int(item) - 1
                     if 0 <= index < len(topic_labels):
                         label_indices.add(index)
 
@@ -92,20 +88,56 @@ def classify_speech(text: str) -> List[str]:
 
     return [topic_labels[i] for i in sorted(label_indices)[:5]]
 
-# Run classification
-results = []
-for doc in documents:
-    print(f"\nClassifying: {doc['doc_name']}")
-    labels = classify_speech(doc["transcript"])
-    print(f"Labels: {labels}")
-    results.append({
-        "doc_name": doc["doc_name"],
-        "date": doc["date"],
-        "labels": labels
-    })
+# Save checkpoint to file
+def save_checkpoint(results):
+    with open(CHECKPOINT_PATH, "w") as f:
+        json.dump(results, f)
+    print(f"Checkpoint saved to {CHECKPOINT_PATH}")
 
-# Save results
-np.savez("speech_labels_test.npz",
-    doc_names=np.array([r["doc_name"] for r in results]),
-    dates=np.array([r["date"] for r in results]),
-    labels=np.array([r["labels"] for r in results], dtype=object))
+# Load from checkpoint file
+def load_checkpoint():
+    with open(CHECKPOINT_PATH, "r") as f:
+        return json.load(f)
+
+# Main script
+if __name__ == "__main__":
+    with open("speeches.json", "r") as f:
+        all_documents = json.load(f)
+
+    # Resume from checkpoint if exists
+    if os.path.exists(CHECKPOINT_PATH):
+        print(f"Resuming from checkpoint: {CHECKPOINT_PATH}")
+        results = load_checkpoint()
+        labeled_docs = {r["doc_name"] for r in results}
+    else:
+        results = []
+        labeled_docs = set()
+
+    total = len(all_documents)
+    for i, doc in enumerate(all_documents, 1):
+        if doc["doc_name"] in labeled_docs:
+            continue
+
+        print(f"\n[{i}/{total}] Classifying: {doc['doc_name']}")
+        labels = classify_speech(doc["transcript"])
+        print(f"Labels: {labels}")
+
+        result = {
+            "doc_name": doc["doc_name"],
+            "date": doc["date"],
+            "labels": labels
+        }
+        results.append(result)
+        save_checkpoint(results)
+
+    # Save final results to .npz
+    np.savez("speech_labels.npz",
+        doc_names=np.array([r["doc_name"] for r in results]),
+        dates=np.array([r["date"] for r in results]),
+        labels=np.array([r["labels"] for r in results], dtype=object))
+
+    try:
+        os.remove(CHECKPOINT_PATH)
+        print("Removed checkpoint file.")
+    except Exception as e:
+        print(f"Could not delete checkpoint file: {e}")
