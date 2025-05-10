@@ -35,7 +35,7 @@ def save_metadata_and_embeddings(doc_names, dates, embeddings, out_path="speech_
 
 # Main logic
 if __name__ == "__main__":
-    with open("speeches.json", "r") as f:
+    with open("presidential_speeches.json", "r") as f:
         documents = json.load(f)
 
     doc_names = []

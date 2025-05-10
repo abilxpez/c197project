@@ -1,7 +1,7 @@
 import json, requests, sys
 
 endpoint = "https://api.millercenter.org/speeches"
-out_file = "speeches.json"
+out_file = "presidential_speeches.json"
 
 r = requests.post(url=endpoint)
 data = r.json()

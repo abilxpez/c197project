@@ -102,7 +102,7 @@ def load_checkpoint():
 
 # Main script
 if __name__ == "__main__":
-    with open("speeches.json", "r") as f:
+    with open("presidential_speeches.json", "r") as f:
         all_documents = json.load(f)
 
     # Resume from checkpoint if exists
