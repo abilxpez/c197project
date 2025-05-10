@@ -64,9 +64,10 @@ def classify_speech(text: str) -> List[str]:
         prompt = build_prompt(chunk)
         try:
             response = client.chat.completions.create(
-                model="gpt-4o",
+                model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": prompt}]
             )
+
             output = response.choices[0].message.content.strip()
 
             if output.lower() == "none":
@@ -108,26 +109,31 @@ if __name__ == "__main__":
     if os.path.exists(CHECKPOINT_PATH):
         print(f"Resuming from checkpoint: {CHECKPOINT_PATH}")
         results = load_checkpoint()
-        labeled_docs = {r["doc_name"] for r in results}
+        doc_status = {r["doc_name"]: r["labels"] for r in results}
     else:
         results = []
-        labeled_docs = set()
+        doc_status = {}
 
     total = len(all_documents)
     for i, doc in enumerate(all_documents, 1):
-        if doc["doc_name"] in labeled_docs:
+        doc_name = doc["doc_name"]
+        existing_labels = doc_status.get(doc_name)
+
+        # Only skip if already labeled and not Unlabeled
+        if existing_labels and existing_labels != ["Unlabeled"]:
             continue
 
-        print(f"\n[{i}/{total}] Classifying: {doc['doc_name']}")
+        print(f"\n[{i}/{total}] Classifying: {doc_name}")
         labels = classify_speech(doc["transcript"])
         print(f"Labels: {labels}")
 
-        result = {
-            "doc_name": doc["doc_name"],
+        # Replace old entry if present
+        results = [r for r in results if r["doc_name"] != doc_name]
+        results.append({
+            "doc_name": doc_name,
             "date": doc["date"],
             "labels": labels
-        }
-        results.append(result)
+        })
         save_checkpoint(results)
 
     # Save final results to .npz
