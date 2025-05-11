@@ -1,11 +1,10 @@
 import os
-import json
 import numpy as np
 from dotenv import load_dotenv
 from openai import OpenAI
 import tiktoken
 
-# Load API key from .env
+# Load API key
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -25,7 +24,7 @@ def get_embedding(text, model="text-embedding-3-small"):
     )
     return response.data[0].embedding
 
-# Save final output
+# Save output
 def save_metadata_and_embeddings(ids, dates, embeddings, out_path="congress_speech_embeddings_test.npz"):
     np.savez(out_path,
              ids=np.array(ids),
@@ -35,22 +34,22 @@ def save_metadata_and_embeddings(ids, dates, embeddings, out_path="congress_spee
 
 # Main script
 if __name__ == "__main__":
-    with open("congress_speeches.json", "r") as f:
-        documents = json.load(f)
-
-    documents = documents[:5]  # Only take first 5 for testing
+    data = np.load("congress_speeches.npz", allow_pickle=True)
+    ids_raw = data["ids"]
+    dates_raw = data["dates"]
+    texts_raw = data["texts"]
 
     ids = []
     dates = []
     embeddings = []
 
-    total = len(documents)
-    for i, doc in enumerate(documents, 1):
-        doc_id = doc["id"]
-        date = doc["date"]
-        text = doc["text"]
+    total = min(5, len(ids_raw))  # only embed first 5
+    for i in range(total):
+        doc_id = ids_raw[i]
+        date = dates_raw[i]
+        text = texts_raw[i]
 
-        print(f"[{i}/{total}] Processing document ID: {doc_id}")
+        print(f"[{i+1}/{total}] Processing document ID: {doc_id}")
         truncated = truncate_to_token_limit(text)
 
         try:
