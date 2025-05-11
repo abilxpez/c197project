@@ -1,3 +1,6 @@
 .env
 congress_speeches.json
 congress_speeches.json.zip
+congress_checkpoint.json
+congress_speeches_recovered.json
+recovery_progress_checkpoint.json
