@@ -3,11 +3,10 @@ import json
 import numpy as np
 
 CHECKPOINT_FILE = "congress_checkpoint.json"
-RECOVERY_JSON = "congress_speeches_recovered.json"
-RECOVERY_NPZ = "congress_speeches_recovered.npz"
 RECOVERY_PROGRESS = "recovery_progress_checkpoint.json"
+CHUNK_SIZE = 50000
 
-def extract_all_by_brace_balance(filepath, already_recovered=0):
+def extract_and_save_chunks(filepath, already_recovered=0, chunk_index=0):
     with open(filepath, "r") as f:
         raw = f.read()
 
@@ -15,12 +14,8 @@ def extract_all_by_brace_balance(filepath, already_recovered=0):
     if start == -1:
         raise ValueError("Could not find 'data' array.")
     start_bracket = raw.find('[', start)
-    if start_bracket == -1:
-        raise ValueError("Could not find '[' after 'data':")
-
     content = raw[start_bracket + 1:]
 
-    objects = []
     brace_depth = 0
     in_string = False
     escape = False
@@ -28,6 +23,8 @@ def extract_all_by_brace_balance(filepath, already_recovered=0):
 
     obj_count = 0
     i = 0
+    buffer = []
+
     while i < len(content):
         char = content[i]
 
@@ -54,60 +51,65 @@ def extract_all_by_brace_balance(filepath, already_recovered=0):
                     obj_count += 1
                     i += 1
                     continue
+
                 obj_str = content[obj_start:i+1]
                 try:
                     obj = json.loads(obj_str)
-                    objects.append(obj)
+                    buffer.append(obj)
                     obj_count += 1
 
                     if obj_count % 50 == 0:
                         print(f"[{obj.get('id', '?')}] {obj.get('title', '')[:50]} — {' '.join(obj.get('text', '').split()[:20])}...\n")
 
-                    if obj_count % 100 == 0:
+                    if len(buffer) == CHUNK_SIZE:
+                        save_chunk(buffer, chunk_index)
+                        buffer = []
+                        chunk_index += 1
+
                         with open(RECOVERY_PROGRESS, "w") as f:
-                            json.dump({
-                                "count": obj_count,
-                                "data": objects
-                            }, f)
-                        print(f"Checkpoint saved at {obj_count} recovered speeches...")
+                            json.dump({"count": obj_count, "chunk_index": chunk_index}, f)
+                        print(f"Saved chunk {chunk_index}, total recovered: {obj_count}")
 
                 except json.JSONDecodeError:
                     pass
         i += 1
 
-    return objects
+    # Save remaining buffer
+    if buffer:
+        save_chunk(buffer, chunk_index)
+        with open(RECOVERY_PROGRESS, "w") as f:
+            json.dump({"count": obj_count, "chunk_index": chunk_index + 1}, f)
+        print(f"Final chunk {chunk_index} saved with {len(buffer)} speeches.")
 
-def save_outputs(recovered_data):
-    with open(RECOVERY_JSON, "w") as f:
-        json.dump(recovered_data, f, indent=2)
+def save_chunk(data, index):
+    suffix = str(index + 1).zfill(5)
+    json_path = f"recovered_part_{suffix}.json"
+    npz_path = f"recovered_part_{suffix}.npz"
+
+    with open(json_path, "w") as f:
+        json.dump(data, f, indent=2)
 
     np.savez(
-        RECOVERY_NPZ,
-        ids=np.array([d["id"] for d in recovered_data]),
-        dates=np.array([d["date"] for d in recovered_data]),
-        titles=np.array([d["title"] for d in recovered_data]),
-        texts=np.array([d["text"] for d in recovered_data]),
-        speaker_states=np.array([d["speaker_state"] for d in recovered_data]),
-        speaker_parties=np.array([d["speaker_party"] for d in recovered_data]),
+        npz_path,
+        ids=np.array([d["id"] for d in data]),
+        dates=np.array([d["date"] for d in data]),
+        titles=np.array([d["title"] for d in data]),
+        texts=np.array([d["text"] for d in data]),
+        speaker_states=np.array([d["speaker_state"] for d in data]),
+        speaker_parties=np.array([d["speaker_party"] for d in data]),
     )
+    print(f"Saved to {json_path} and {npz_path}")
 
-    print(f"\nSaved final JSON to '{RECOVERY_JSON}' and NPZ to '{RECOVERY_NPZ}'")
-
-# Load progress if it exists
+# Load progress
 if os.path.exists(RECOVERY_PROGRESS):
     with open(RECOVERY_PROGRESS, "r") as f:
-        progress_data = json.load(f)
-    recovered_data = progress_data["data"]
-    already_recovered = progress_data["count"]
-    print(f"Resuming from previously recovered {already_recovered} speeches...")
+        prog = json.load(f)
+    already_recovered = prog.get("count", 0)
+    chunk_index = prog.get("chunk_index", 0)
+    print(f"Resuming from speech #{already_recovered}, chunk {chunk_index}")
 else:
-    recovered_data = []
     already_recovered = 0
+    chunk_index = 0
     print("Starting fresh recovery...")
 
-# Continue recovery
-new_data = extract_all_by_brace_balance(CHECKPOINT_FILE, already_recovered=already_recovered)
-recovered_data += new_data
-
-# Save final outputs
-save_outputs(recovered_data)
+extract_and_save_chunks(CHECKPOINT_FILE, already_recovered, chunk_index)
