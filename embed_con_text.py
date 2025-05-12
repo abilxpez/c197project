@@ -26,13 +26,14 @@ def get_embedding(text, model="text-embedding-3-small"):
     )
     return response.data[0].embedding
 
-# Save current progress
-def save_metadata_and_embeddings(doc_ids, dates, embeddings, out_path):
+# Save current chunk to a separate file
+def save_chunk(doc_ids, dates, embeddings, chunk_index, base_name="congress_speech_embeddings_chunk"):
+    out_path = f"{base_name}_{chunk_index}.npz"
     np.savez(out_path,
              doc_ids=np.array(doc_ids),
              dates=np.array(dates),
              embeddings=np.array(embeddings))
-    print(f"Checkpoint saved to {out_path} [{len(doc_ids)} documents]")
+    print(f"Chunk {chunk_index} saved to {out_path} [{len(doc_ids)} entries]")
 
 # Main logic
 if __name__ == "__main__":
@@ -44,12 +45,11 @@ if __name__ == "__main__":
     sampled_docs = random.sample(all_documents, sample_size)
     print(f"Randomly sampled {sample_size} congressional speeches.")
 
+    chunk_size = 1_000  # Change to 5000 if desired
     doc_ids = []
     dates = []
     embeddings = []
-
-    checkpoint_path = "congress_speech_embeddings_checkpoint.npz"
-    final_path = "congress_speech_embeddings_100k.npz"
+    chunk_index = 1
 
     for i, doc in enumerate(sampled_docs, 1):
         doc_id = doc["id"]
@@ -70,10 +70,14 @@ if __name__ == "__main__":
         dates.append(date)
         embeddings.append(embedding)
 
-        # Save checkpoint every 1000 entries
-        if i % 1000 == 0:
-            save_metadata_and_embeddings(doc_ids, dates, embeddings, checkpoint_path)
+        # Save and reset every chunk_size entries
+        if i % chunk_size == 0:
+            save_chunk(doc_ids, dates, embeddings, chunk_index)
+            doc_ids, dates, embeddings = [], [], []  # Reset for next chunk
+            chunk_index += 1
 
-    # Final save after loop
-    print(f"\nFinished embedding {len(embeddings)} out of {sample_size} documents.")
-    save_metadata_and_embeddings(doc_ids, dates, embeddings, final_path)
+    # Save any remaining items after final chunk
+    if doc_ids:
+        save_chunk(doc_ids, dates, embeddings, chunk_index)
+
+    print(f"\nFinished embedding {sample_size} documents in {chunk_index} chunks.")
