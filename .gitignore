@@ -3,6 +3,8 @@ congress_checkpoint.json
 congress_chunk_00000.json
 congress_chunk_00000.npz
 congress_chunk_00001.json
+congress_speech_embeddings_checkpoint.npz
+congress_speech_embeddings_sample.npz
 congress_speeches_recovered.json
 congress_speeches.json.zip
 recovered_part_00001.json
