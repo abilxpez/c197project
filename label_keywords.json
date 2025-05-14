@@ -1,0 +1,91 @@
+{
+    "Economy and Trade": [
+      "inflation", "GDP", "tariff", "exports", "imports",
+      "trade agreement", "economic growth", "small business", "commerce", "stock market"
+    ],
+    "National Defense and Military": [
+      "military", "troops", "defense budget", "veterans", "armed forces",
+      "national security", "Department of Defense", "Pentagon", "enlistment", "military base"
+    ],
+    "Foreign Policy and Diplomacy": [
+      "foreign relations", "diplomacy", "United Nations", "treaty", "international",
+      "ambassador", "foreign aid", "sanctions", "State Department", "foreign affairs"
+    ],
+    "Immigration and Border Policy": [
+      "immigration", "border security", "asylum", "deportation", "visa",
+      "ICE", "green card", "migrant", "DACA", "citizenship"
+    ],
+    "Civil Rights and Racial Equality": [
+      "civil rights", "racism", "discrimination", "equality", "segregation",
+      "justice", "Black community", "police brutality", "racial equity", "systemic racism"
+    ],
+    "Women's Rights": [
+      "women's rights", "gender equality", "reproductive rights", "sexual harassment", "equal pay",
+      "Title IX", "violence against women", "feminism", "maternity", "women's health"
+    ],
+    "LGBTQ+ Rights": [
+      "LGBTQ", "gay rights", "same-sex marriage", "transgender", "equality act",
+      "discrimination", "gender identity", "sexual orientation", "pride", "hate crimes"
+    ],
+    "Law Enforcement and Criminal Justice": [
+      "police", "crime", "incarceration", "justice system", "law enforcement",
+      "prison reform", "criminal justice", "sentencing", "bail", "public safety"
+    ],
+    "Healthcare and Public Health": [
+      "healthcare", "Medicare", "Medicaid", "insurance", "hospitals",
+      "public health", "pandemic", "mental health", "affordable care", "prescription drugs"
+    ],
+    "Education and Schools": [
+      "education", "students", "teachers", "public schools", "curriculum",
+      "K-12", "college", "school funding", "STEM education", "school board"
+    ],
+    "Science, Technology, and Innovation": [
+      "research", "technology", "innovation", "AI", "science",
+      "NASA", "cybersecurity", "STEM", "data privacy", "tech industry"
+    ],
+    "Climate and Environment": [
+      "climate change", "pollution", "carbon emissions", "EPA", "environment",
+      "global warming", "greenhouse gases", "clean energy", "biodiversity", "conservation"
+    ],
+    "Infrastructure and Transportation": [
+      "infrastructure", "roads", "bridges", "public transit", "transportation",
+      "rail", "airports", "highways", "infrastructure bill", "commute"
+    ],
+    "Government Reform and Corruption": [
+      "ethics", "government accountability", "lobbying", "transparency", "campaign finance",
+      "corruption", "whistleblower", "oversight", "public trust", "reform"
+    ],
+    "Elections and Democratic Institutions": [
+      "election", "voter suppression", "ballot", "electoral college", "voting rights",
+      "gerrymandering", "democracy", "campaign", "vote", "polls"
+    ],
+    "Religion, Values, and National Identity": [
+      "faith", "religion", "Christian", "church", "values",
+      "national anthem", "patriotism", "Judeo-Christian", "American identity", "family values"
+    ],
+    "Social Welfare and Poverty": [
+      "food stamps", "poverty", "welfare", "SNAP", "homelessness",
+      "childcare", "low-income", "affordable housing", "social services", "safety net"
+    ],
+    "Labor, Jobs, and Workers' Rights": [
+      "minimum wage", "labor union", "workers' rights", "paid leave", "jobs",
+      "employment", "unemployment", "OSHA", "blue collar", "strike"
+    ],
+    "Gun Policy and Second Amendment": [
+      "gun control", "Second Amendment", "firearms", "NRA", "background checks",
+      "mass shooting", "gun rights", "assault weapons", "gun violence", "concealed carry"
+    ],
+    "Energy and Natural Resources": [
+      "energy", "oil", "gas", "renewables", "fossil fuels",
+      "natural resources", "energy independence", "pipeline", "solar", "drilling"
+    ],
+    "Terrorism, Homeland Security, and War on Terror": [
+      "terrorism", "homeland security", "ISIS", "Al-Qaeda", "Department of Homeland Security",
+      "Patriot Act", "radicalization", "9/11", "national threat", "extremism"
+    ],
+    "Indigenous and Tribal Affairs": [
+      "Native American", "tribal", "indigenous", "reservation", "Bureau of Indian Affairs",
+      "Indian Health Service", "sovereignty", "land rights", "treaty", "tribal council"
+    ]
+  }
+  
