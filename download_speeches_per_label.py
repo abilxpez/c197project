@@ -3,22 +3,25 @@ import json
 import requests
 from time import sleep
 
-# Load label-keyword mapping (first 3 labels only)
+# Load all 22 labels and keywords
 with open("label_keywords.json", "r") as f:
     label_keywords = json.load(f)
 
-target_labels = list(label_keywords.keys())[:3]  # First 3 labels
-target_count_per_label = 5
-label_samples = {label: [] for label in target_labels}
+target_labels = list(label_keywords.keys())
+target_count_per_label = 50
+
+# Track how many speeches we’ve matched per label
+label_counts = {label: 0 for label in target_labels}
+sampled_speeches = {}  # key: speech_id → speech info + labels
 
 # Set up API parameters
 BASE_URL = "http://congressionalspeech.lib.uiowa.edu/api.php/speeches"
 PAGE_SIZE = 50
 current_page = 1
 
-print("Starting sampling...")
+print("Starting multi-label sampling for 22 labels × 50 speeches...")
 
-while any(len(samples) < target_count_per_label for samples in label_samples.values()):
+while any(count < target_count_per_label for count in label_counts.values()):
     print(f"\nFetching page {current_page}...")
     url = f"{BASE_URL}?transform=1&order=id&page={current_page},{PAGE_SIZE}"
     response = requests.get(url)
@@ -39,32 +42,45 @@ while any(len(samples) < target_count_per_label for samples in label_samples.val
         break
 
     for entry in speeches:
+        speech_id = entry["id"]
         speech_text = entry.get("speaking", "").lower()
 
+        matched_labels = []
         for label in target_labels:
-            if len(label_samples[label]) >= target_count_per_label:
+            if label_counts[label] >= target_count_per_label:
                 continue
 
             keywords = [kw.lower() for kw in label_keywords[label]]
             if any(kw in speech_text for kw in keywords):
-                sample = {
-                    "label": label,
-                    "id": entry["id"],
+                matched_labels.append(label)
+
+        if matched_labels:
+            if speech_id not in sampled_speeches:
+                sampled_speeches[speech_id] = {
+                    "id": speech_id,
                     "date": entry.get("date", ""),
                     "title": entry.get("title", ""),
                     "text": entry.get("speaking", ""),
                     "speaker_state": entry.get("speaker_state", ""),
-                    "speaker_party": entry.get("speaker_party", "")
+                    "speaker_party": entry.get("speaker_party", ""),
+                    "labels": []
                 }
-                label_samples[label].append(sample)
-                print(f"✅ Match for '{label}' (ID {sample['id']}): {sample['title'][:40]}...")
+
+            for label in matched_labels:
+                if (
+                    label_counts[label] < target_count_per_label and
+                    label not in sampled_speeches[speech_id]["labels"]
+                ):
+                    sampled_speeches[speech_id]["labels"].append(label)
+                    label_counts[label] += 1
+                    print(f" Match for '{label}' (ID {speech_id}): {entry.get('title', '')[:40]}...")
 
     current_page += 1
     sleep(0.5)
 
-# Combine and save
-all_samples = [speech for speeches in label_samples.values() for speech in speeches]
+# Save final result
+final_samples = list(sampled_speeches.values())
 with open("sampled_labeled_speeches.json", "w") as f:
-    json.dump(all_samples, f, indent=2)
+    json.dump(final_samples, f, indent=2)
 
-print(f"\n✅ Finished! Saved {len(all_samples)} speeches to 'sampled_labeled_speeches.json'")
+print(f"\n Finished! Saved {len(final_samples)} speeches with multi-labels to 'sampled_labeled_speeches.json'")
