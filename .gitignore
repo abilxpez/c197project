@@ -14,4 +14,4 @@ congress_speech_embeddings_100k_combined.npz
 congress_embeddings_99k_filtered.npz
 congress_embeddings_99k_filtered.npz.zip
 congress_speeches_labeled_embedded.npz
-
+congress_speeches_labeled_embedded.json
