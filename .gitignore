@@ -11,4 +11,7 @@ recovered_part_00001.json
 recovered_part_00001.npz
 recovery_progress_checkpoint.json
 congress_speech_embeddings_100k_combined.npz
+congress_embeddings_99k_filtered.npz
+congress_embeddings_99k_filtered.npz.zip
+congress_speeches_labeled_embedded.npz
 

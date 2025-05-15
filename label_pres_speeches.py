@@ -137,7 +137,7 @@ if __name__ == "__main__":
         save_checkpoint(results)
 
     # Save final results to .npz
-    np.savez("speech_labels.npz",
+    np.savez("president_speech_labels.npz",
         doc_names=np.array([r["doc_name"] for r in results]),
         dates=np.array([r["date"] for r in results]),
         labels=np.array([r["labels"] for r in results], dtype=object))
